@@ -1,9 +1,17 @@
+build: clean format
+	go build -o build/tslogs -race main.go
+
 clean:
 	mkdir -p build
 	rm -rf build/*
 
-build: clean
-	go build -o build/tslogs -race main.go
+clean_tmp:
+	rm -rf ./tmp
+	mkdir ./tmp
+
+format:
+	goimports -w ./..
+	gofmt -w ./..
 
 package_as: build
 	rm -rf package/tslogs

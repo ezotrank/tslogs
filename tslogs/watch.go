@@ -27,25 +27,41 @@ func init() {
 	}
 }
 
-func NewOpenTSTD(host string, port int) (*OpenTSTD, error) {
+func NewOpenTSTD(host string, port int) *OpenTSTD {
 	tstd := &OpenTSTD{Host: host, Port: port}
-	addr := strings.Join([]string{host, strconv.Itoa(port)}, ":")
-	var err error
-	tstd.conn, err = net.Dial("tcp", addr)
-	return tstd, err
+	return tstd
 }
 
 type OpenTSTD struct {
-	Host string
-	Port int
-	conn net.Conn
+	Host  string
+	Port  int
+	conn  net.Conn
+	mutex sync.Mutex
+}
+
+func (self *OpenTSTD) Connect() error {
+	addr := strings.Join([]string{self.Host, strconv.Itoa(self.Port)}, ":")
+	var err error
+	self.conn, err = net.Dial("tcp", addr)
+	return err
 }
 
 func (self *OpenTSTD) Send(m *Metric) error {
 	msg := fmt.Sprintf("put %s %s %s %s\n", m.Name, m.StringTime(), m.Value, m.StringTags())
 	_, err := self.conn.Write([]byte(msg))
 	if err != nil {
-		log.Errorf("can't send data to server, err: %v", err)
+		switch err := err.(type) {
+		case net.Error:
+			defer self.mutex.Unlock()
+			self.mutex.Lock()
+			for {
+				log.Errorf("net.Error %v", err)
+				if self.Connect() == nil {
+					break
+				}
+				time.Sleep(1000 * time.Millisecond)
+			}
+		}
 	}
 	return err
 }
@@ -85,32 +101,30 @@ func tailFile(filePath string, rules []*Rule, wg *sync.WaitGroup) error {
 	log.Infof("start watching file %q", filePath)
 	for line := range t.Lines {
 		for _, rule := range rules {
-			if rule.Regexp.Match([]byte(line.Text)) {
-				matches := rule.Regexp.FindStringSubmatch(line.Text)
-				if len(matches) == 0 {
-					return nil
-				}
-				tags := make(map[string]interface{})
-				var val string
-				for i, value := range matches[1:] {
-					if rule.Regexp.SubexpNames()[i+1] == "val" {
-						val = value
-					} else {
-						tags[rule.Regexp.SubexpNames()[i+1]] = value
-					}
-				}
-				t := time.Now()
-				metric := &Metric{Name: rule.Name, Value: val, Time: &t, Tags: tags}
-				tstd.Send(metric)
+			matches := rule.Regexp.FindStringSubmatch(line.Text)
+			if len(matches) == 0 {
+				continue
 			}
+			tags := make(map[string]interface{})
+			var val string
+			for i, value := range matches[1:] {
+				if rule.SubexpNames[i+1] == "val" {
+					val = value
+				} else {
+					tags[rule.SubexpNames[i+1]] = value
+				}
+			}
+			t := time.Now()
+			metric := &Metric{Name: rule.Name, Value: val, Time: &t, Tags: tags}
+			tstd.Send(metric)
 		}
 	}
 	return nil
 }
 
 func Watch(config *Config) error {
-	var err error
-	tstd, err = NewOpenTSTD(config.Host, config.Port)
+	tstd = NewOpenTSTD(config.Host, config.Port)
+	err := tstd.Connect()
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ const (
 var (
 	configFile = flag.String("config", "./config.toml", "config file")
 	version    = flag.Bool("version", false, "version number")
+	dryRun     = flag.Bool("dry-run", false, "dry run")
 )
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't load config, err: %v", err)
 	}
+	config.DryRun = *dryRun
 	err = tslogs.Watch(config)
 	if err != nil {
 		log.Fatalf("can't run Watch, err: %v", err)

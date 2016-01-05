@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	DryRun bool
 	Host   string
 	Port   int
 	Groups map[string]*Group
@@ -23,8 +24,9 @@ func (self *Config) load() error {
 }
 
 type Rule struct {
-	Name   string
-	Regexp *regexp.Regexp
+	Name        string
+	Regexp      *regexp.Regexp
+	SubexpNames []string
 }
 
 type Group struct {
@@ -40,7 +42,7 @@ func (self *Group) prepareRegexp() error {
 		if err != nil {
 			return err
 		}
-		self.rules = append(self.rules, &Rule{rule[0], r})
+		self.rules = append(self.rules, &Rule{rule[0], r, r.SubexpNames()})
 	}
 	return nil
 }
