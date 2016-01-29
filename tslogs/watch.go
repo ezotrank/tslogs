@@ -17,6 +17,7 @@ import (
 var (
 	hostname string
 	tstd     *OpenTSTD
+	DC       string
 )
 
 func init() {
@@ -91,7 +92,7 @@ func getFiles(pattern string) ([]string, error) {
 	return filepath.Glob(pattern)
 }
 
-func tailFile(filePath string, rules []*Rule, wg *sync.WaitGroup) error {
+func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 	defer wg.Done()
 	t, err := tail.TailFile(filePath, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -100,18 +101,24 @@ func tailFile(filePath string, rules []*Rule, wg *sync.WaitGroup) error {
 	}
 	log.Infof("start watching file %q", filePath)
 	for line := range t.Lines {
-		for _, rule := range rules {
+		for _, rule := range group.rules {
 			matches := rule.Regexp.FindStringSubmatch(line.Text)
 			if len(matches) == 0 {
 				continue
 			}
 			tags := make(map[string]interface{})
+			if len(DC) > 0 {
+				tags["dc"] = DC
+			}
 			var val string
 			for i, value := range matches[1:] {
-				if rule.SubexpNames[i+1] == "val" {
-					val = value
-				} else {
+				switch rule.SubexpNames[i+1] {
+				default:
 					tags[rule.SubexpNames[i+1]] = value
+				case "val":
+					val = value
+				case "val_count":
+					val = "1"
 				}
 			}
 			t := time.Now()
@@ -136,7 +143,7 @@ func Watch(config *Config) error {
 		}
 		for _, fPath := range filePaths {
 			wg.Add(1)
-			go tailFile(fPath, group.rules, wg)
+			go tailFile(fPath, group, wg)
 		}
 	}
 	log.Info("watching...")

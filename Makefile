@@ -1,5 +1,14 @@
-build: clean format
+build: clean
 	go build -o build/tslogs -race main.go
+
+deps: init
+	go get golang.org/x/tools/cmd/goimports
+
+init:
+	export GOPATH=`pwd`/vendor
+	export PATH=`pwd`/vendor/bin:$PATH
+	mkdir -p vendor/src/github.com/ezotrank/tslogs
+	ln -snf `pwd`/tslogs vendor/src/github.com/ezotrank/tslogs/tslogs
 
 clean:
 	mkdir -p build
@@ -9,11 +18,11 @@ clean_tmp:
 	rm -rf ./tmp
 	mkdir ./tmp
 
-format:
+format: init
 	goimports -w ./..
 	gofmt -w ./..
 
-package_as: build
+package_as: init build
 	rm -rf package/tslogs
 	mkdir -p package/tslogs
 	cp -rf build/tslogs package/tslogs

@@ -30,9 +30,10 @@ type Rule struct {
 }
 
 type Group struct {
-	Mask  string
-	Rules [][]string
-	rules []*Rule
+	Mask       string
+	Rules      [][]string
+	PresetTags map[string]interface{} `json:"preset_tags"`
+	rules      []*Rule
 }
 
 func (self *Group) prepareRegexp() error {
