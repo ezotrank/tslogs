@@ -94,7 +94,7 @@ func getFiles(pattern string) ([]string, error) {
 
 func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 	defer wg.Done()
-	t, err := tail.TailFile(filePath, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
+	t, err := tail.TailFile(filePath, tail.Config{Poll: true, Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
 		log.Errorf("can't tail file %q err: %v", filePath, err)
 		return err

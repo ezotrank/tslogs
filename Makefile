@@ -1,8 +1,8 @@
 build: clean
-	go build -o build/tslogs -race main.go
+	GO15VENDOREXPERIMENT=1 go build -o build/tslogs -race main.go
 
 deps: init
-	go get golang.org/x/tools/cmd/goimports
+	GO15VENDOREXPERIMENT=1 go get golang.org/x/tools/cmd/goimports
 
 init:
 	export GOPATH=`pwd`/vendor
