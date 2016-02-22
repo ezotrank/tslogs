@@ -24,9 +24,10 @@ func (self *Config) load() error {
 }
 
 type Rule struct {
-	Name        string
-	Regexp      *regexp.Regexp
-	SubexpNames []string
+	Name           string
+	Regexp         *regexp.Regexp
+	SubexpNames    []string
+	stringContains string
 }
 
 type Group struct {
@@ -43,7 +44,11 @@ func (self *Group) prepareRegexp() error {
 		if err != nil {
 			return err
 		}
-		self.rules = append(self.rules, &Rule{rule[0], r, r.SubexpNames()})
+		stringContains := ""
+		if len(rule) == 3 {
+			stringContains = rule[2]
+		}
+		self.rules = append(self.rules, &Rule{rule[0], r, r.SubexpNames(), stringContains})
 	}
 	return nil
 }

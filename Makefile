@@ -1,14 +1,13 @@
-build: clean
-	GO15VENDOREXPERIMENT=1 go build -o build/tslogs -race main.go
+build: clean init
+	GOPATH=`pwd`/vendor go build -o build/tslogs -race bin/main.go
 
 deps: init
-	GO15VENDOREXPERIMENT=1 go get golang.org/x/tools/cmd/goimports
+	(export GOPATH=`pwd`/vendor && cd vendor/src/github.com/ezotrank/tslogs && go get)
 
 init:
-	export GOPATH=`pwd`/vendor
-	export PATH=`pwd`/vendor/bin:$PATH
-	mkdir -p vendor/src/github.com/ezotrank/tslogs
-	ln -snf `pwd`/tslogs vendor/src/github.com/ezotrank/tslogs/tslogs
+	mkdir -p vendor/ssdlrc/github.com/ezotrank
+	rm -rf vendor/src/github.com/ezotrank/tslogs
+	ln -snf `pwd` vendor/src/github.com/ezotrank/tslogs
 
 clean:
 	mkdir -p build
@@ -19,13 +18,11 @@ clean_tmp:
 	mkdir ./tmp
 
 format: init
-	goimports -w ./..
-	gofmt -w ./..
+	gofmt -w *.go
+	goimports -w *.go
 
-package_as: init build
-	rm -rf package/tslogs
-	mkdir -p package/tslogs
-	cp -rf build/tslogs package/tslogs
-	cp -rf staff/as_yasen_config.toml package/tslogs/config.toml
-	cp -rf staff/as_monit.conf package/tslogs
-	(cd package && tar -cvzf tslogs.tar.gz ./tslogs/* && rm -rf ./tslogs)
+deploy: build
+	ssh $$USER@$$HOST "mkdir -p ~/tslogs"
+	gzip -5 build/tslogs
+	scp ./build/tslogs.gz $$USER@$$HOST:"~/tslogs/tslogs.gz"
+	ssh $$USER@$$HOST "cd ~/tslogs && gzip -fd tslogs.gz"

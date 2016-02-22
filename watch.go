@@ -10,21 +10,21 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/hpcloud/tail"
 )
 
 var (
 	hostname string
 	tstd     *OpenTSTD
-	DC       string
+	NodeTags map[string]interface{}
 )
 
 func init() {
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
-		log.Fatalf("can't get hostname, err: %v", err)
+		Log.Printf("[ERROR] can't get hostname, err: %v", err)
+		panic(err)
 	}
 }
 
@@ -56,7 +56,7 @@ func (self *OpenTSTD) Send(m *Metric) error {
 			defer self.mutex.Unlock()
 			self.mutex.Lock()
 			for {
-				log.Errorf("net.Error %v", err)
+				Log.Printf("[WARN] net.Error %v", err)
 				if self.Connect() == nil {
 					break
 				}
@@ -96,19 +96,24 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 	defer wg.Done()
 	t, err := tail.TailFile(filePath, tail.Config{Poll: true, Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
-		log.Errorf("can't tail file %q err: %v", filePath, err)
+		Log.Printf("[WARN] can't tail file %q err: %v", filePath, err)
 		return err
 	}
-	log.Infof("start watching file %q", filePath)
+	Log.Printf("[INFO] start watching file %q", filePath)
 	for line := range t.Lines {
 		for _, rule := range group.rules {
+			if len(rule.stringContains) > 0 {
+				if !strings.Contains(line.Text, rule.stringContains) {
+					continue
+				}
+			}
 			matches := rule.Regexp.FindStringSubmatch(line.Text)
 			if len(matches) == 0 {
 				continue
 			}
 			tags := make(map[string]interface{})
-			if len(DC) > 0 {
-				tags["dc"] = DC
+			for k, v := range NodeTags {
+				tags[k] = v
 			}
 			var val string
 			for i, value := range matches[1:] {
@@ -146,7 +151,6 @@ func Watch(config *Config) error {
 			go tailFile(fPath, group, wg)
 		}
 	}
-	log.Info("watching...")
 	wg.Wait()
 	return nil
 }
