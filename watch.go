@@ -1,14 +1,15 @@
 package tslogs
 
 import (
-	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+	"bytes"
+	"net/http"
+	"sync"
+	"encoding/json"
 
 	"github.com/hpcloud/tail"
 )
@@ -29,70 +30,69 @@ func init() {
 }
 
 func NewOpenTSTD(host string, port int) *OpenTSTD {
-	tstd := &OpenTSTD{Host: host, Port: port}
+	tstd := &OpenTSTD{Host: host, Port: port, httpClient: &http.Client{}}
 	return tstd
 }
 
 type OpenTSTD struct {
 	Host  string
 	Port  int
-	conn  net.Conn
-	mutex sync.Mutex
+	httpClient *http.Client
 }
 
-func (self *OpenTSTD) Connect() error {
-	addr := strings.Join([]string{self.Host, strconv.Itoa(self.Port)}, ":")
-	var err error
-	self.conn, err = net.Dial("tcp", addr)
-	return err
+func (self *OpenTSTD) apiSendUrl() string {
+	return "http://" + strings.Join([]string{self.Host, strconv.Itoa(self.Port)}, ":") + "/api/put"
 }
 
-func (self *OpenTSTD) Send(m *Metric) error {
-	msg := fmt.Sprintf("put %s %s %s %s\n", m.Name, m.StringTime(), m.Value, m.StringTags())
-	_, err := self.conn.Write([]byte(msg))
-	if err != nil {
-		switch err := err.(type) {
-		case net.Error:
-			defer self.mutex.Unlock()
-			self.mutex.Lock()
-			for {
-				Log.Printf("[WARN] net.Error %v", err)
-				if self.Connect() == nil {
-					break
-				}
-				time.Sleep(1000 * time.Millisecond)
-			}
-		}
+func (self *OpenTSTD) SendMultiple(metrics []*Metric) error {
+	for _,m := range metrics {
+		m.Timestamp = m.IntTime()
+		m.PrepareTags()
 	}
-	return err
+	data, err := json.Marshal(metrics)
+	if err != nil {
+		Log.Printf("[ERROR] can't marshal metrics, err: %v", err)
+		return err
+	}
+	Log.Printf("[DEBUG] send %v", string(data))
+	req, err := http.NewRequest("POST", self.apiSendUrl(), bytes.NewBuffer(data))
+	if err != nil {
+		Log.Printf("[ERROR] can make request, err: %v", err)
+		return err
+	}
+	resp, err := self.httpClient.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		Log.Printf("[ERROR] can't send request, resp: %v, err: %v", resp, err)
+		return err
+	}
+	Log.Print("[DEBUG] OpenTSTD chunk sended")
+	return nil
 }
 
 type Metric struct {
-	Name  string
-	Value string
-	Time  *time.Time
-	Tags  map[string]interface{}
+	Metric string `json:"metric"`
+	Value string `json:"value"`
+	Tags map[string]interface{} `json:"tags"`
+	Timestamp int64 `json:"timestamp"`
+	time  *time.Time
 }
 
-func (self *Metric) StringTime() string {
-	nTime := self.Time.UTC().UnixNano()
-	strTime := strconv.FormatInt(nTime, 10)
-	return strTime[:10] + "." + strTime[10:13]
+func (self *Metric) IntTime() int64 {
+	return self.time.UTC().UnixNano() / int64(time.Millisecond)
 }
 
-func (self *Metric) StringTags() string {
-	out := []string{fmt.Sprintf("host=%s", hostname)}
-	for k, v := range self.Tags {
-		out = append(out, fmt.Sprintf("%s=%v", k, v))
+func (self *Metric) PrepareTags() {
+	if _,ok := self.Tags["host"]; !ok {
+		self.Tags["host"] = hostname
 	}
-	return strings.Join(out, " ")
 }
 
 func getFiles(pattern string) ([]string, error) {
 	return filepath.Glob(pattern)
 }
 
-func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
+func tailFile(filePath string, group *Group, wg *sync.WaitGroup, ch chan *Metric) error {
 	defer wg.Done()
 	t, err := tail.TailFile(filePath, tail.Config{Poll: true, Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -126,21 +126,37 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 					val = "1"
 				}
 			}
+			if len(val) < 1 {
+				val = "0"
+			}
 			t := time.Now()
-			metric := &Metric{Name: rule.Name, Value: val, Time: &t, Tags: tags}
-			tstd.Send(metric)
+			ch <- &Metric{Metric: rule.Name, Value: val, time: &t, Tags: tags}
 		}
 	}
 	return nil
 }
 
+func startQueue(ch chan *Metric, tick uint) error {
+	buff := make([]*Metric, 0)
+	sendTime := time.Now().UnixNano() + (int64(tick) * int64(time.Millisecond))
+	for m := range ch {
+		buff = append(buff, m)
+		if m.time.UnixNano() >= sendTime {
+			tstd.SendMultiple(buff)
+			buff = make([]*Metric, 0)
+			sendTime = m.time.UnixNano() + (int64(tick) * int64(time.Millisecond))
+		}
+	}
+	Log.Print("[DEBUG] Queue started")
+	return nil
+}
+
 func Watch(config *Config) error {
 	tstd = NewOpenTSTD(config.Host, config.Port)
-	err := tstd.Connect()
-	if err != nil {
-		return err
-	}
+
 	wg := &sync.WaitGroup{}
+	ch := make(chan *Metric)
+	go startQueue(ch, config.Tick)
 	for _, group := range config.Groups {
 		filePaths, err := getFiles(group.Mask)
 		if err != nil {
@@ -148,7 +164,7 @@ func Watch(config *Config) error {
 		}
 		for _, fPath := range filePaths {
 			wg.Add(1)
-			go tailFile(fPath, group, wg)
+			go tailFile(fPath, group, wg, ch)
 		}
 	}
 	wg.Wait()

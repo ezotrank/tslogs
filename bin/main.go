@@ -10,12 +10,13 @@ import (
 
 var (
 	configFile = flag.String("config", "./config.toml", "config file")
-	dryRun     = flag.Bool("dry-run", false, "dry run")
+	logLevel = flag.String("log-level", "INFO", "log level DEBUG, INFO, WARN ...")
 	tags = make(map[string]interface{},0)
 )
 
 func main() {
 	flag.Parse()
+	tslogs.SetLogger(*logLevel)
 	for _,arg := range flag.Args() {
 		tags[strings.Split(arg,"=")[0]] = strings.Split(arg,"=")[1]
 	}
@@ -29,7 +30,6 @@ func main() {
 		tslogs.Log.Printf("[ERROR] can't load config, err: %v", err)
 		panic(err)
 	}
-	config.DryRun = *dryRun
 	tslogs.NodeTags = tags
 	err = tslogs.Watch(config)
 	if err != nil {

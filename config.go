@@ -6,10 +6,15 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const (
+	DEFAULT_TICK_TIME = 1000
+)
+
 type Config struct {
 	DryRun bool
 	Host   string
 	Port   int
+	Tick  uint
 	Groups map[string]*Group
 }
 
@@ -60,5 +65,11 @@ func LoadConfig(raw []byte) (*Config, error) {
 		return config, err
 	}
 	err = config.load()
+	if err != nil {
+		return config, err
+	}
+	if config.Tick < 1 {
+		config.Tick = DEFAULT_TICK_TIME
+	}
 	return config, err
 }
