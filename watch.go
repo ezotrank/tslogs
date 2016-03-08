@@ -75,11 +75,11 @@ type Metric struct {
 	Value string `json:"value"`
 	Tags map[string]interface{} `json:"tags"`
 	Timestamp int64 `json:"timestamp"`
-	time  *time.Time
+	time  time.Time
 }
 
 func (self *Metric) IntTime() int64 {
-	return self.time.UTC().UnixNano() / int64(time.Millisecond)
+	return self.time.UnixNano() / int64(time.Millisecond)
 }
 
 func (self *Metric) PrepareTags() {
@@ -127,10 +127,9 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, ch chan *Metric
 				}
 			}
 			if len(val) < 1 {
-				val = "0"
+				val = "1"
 			}
-			t := time.Now()
-			ch <- &Metric{Metric: rule.Name, Value: val, time: &t, Tags: tags}
+			ch <- &Metric{Metric: rule.Name, Value: val, time: time.Now().UTC(), Tags: tags}
 		}
 	}
 	return nil
@@ -138,7 +137,7 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, ch chan *Metric
 
 func startQueue(ch chan *Metric, tick uint) error {
 	buff := make([]*Metric, 0)
-	sendTime := time.Now().UnixNano() + (int64(tick) * int64(time.Millisecond))
+	sendTime := time.Now().UTC().UnixNano() + (int64(tick) * int64(time.Millisecond))
 	for m := range ch {
 		buff = append(buff, m)
 		if m.time.UnixNano() >= sendTime {
