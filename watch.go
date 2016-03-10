@@ -20,6 +20,10 @@ var (
 	NodeTags map[string]interface{}
 )
 
+const (
+	MAX_BUFF_SIZE = 32
+)
+
 func init() {
 	var err error
 	hostname, err = os.Hostname()
@@ -129,7 +133,7 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, ch chan *Metric
 			if len(val) < 1 {
 				val = "1"
 			}
-			ch <- &Metric{Metric: rule.Name, Value: val, time: time.Now().UTC(), Tags: tags}
+			ch <- &Metric{Metric: rule.Name, Value: val, time: time.Now(), Tags: tags}
 		}
 	}
 	return nil
@@ -137,10 +141,10 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, ch chan *Metric
 
 func startQueue(ch chan *Metric, tick uint) error {
 	buff := make([]*Metric, 0)
-	sendTime := time.Now().UTC().UnixNano() + (int64(tick) * int64(time.Millisecond))
+	sendTime := time.Now().UnixNano() + (int64(tick) * int64(time.Millisecond))
 	for m := range ch {
 		buff = append(buff, m)
-		if m.time.UnixNano() >= sendTime {
+		if m.time.UnixNano() >= sendTime || len(buff) >= MAX_BUFF_SIZE {
 			tstd.SendMultiple(buff)
 			buff = make([]*Metric, 0)
 			sendTime = m.time.UnixNano() + (int64(tick) * int64(time.Millisecond))
