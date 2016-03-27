@@ -3,3 +3,9 @@
 /package
 /tmp
 /build/tslogs.gz
+/python/build
+/python/dist
+/python/tslogs.egg-info
+__pycache__
+/vendor/bin
+/vendor/pkg

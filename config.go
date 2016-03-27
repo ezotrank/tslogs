@@ -1,65 +1,85 @@
 package tslogs
 
 import (
+	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
 
 const (
-	DEFAULT_TICK_TIME = 1000
+	DEFAULT_TICK = "60s"
 )
 
 type Config struct {
-	DryRun bool
 	Host   string
 	Port   int
-	Tick  uint
 	Groups map[string]*Group
+	Tags   *Tags
 }
 
 func (self *Config) load() error {
+	var err error
 	for _, group := range self.Groups {
-		err := group.prepareRegexp()
+		if len(group.Tick) < 1 {
+			group.Tick = DEFAULT_TICK
+		}
+		group.tick, err = time.ParseDuration(group.Tick)
 		if err != nil {
 			return err
 		}
+		for _, rule := range group.Rules {
+			err = rule.Prepare()
+			if err != nil {
+				return err
+			}
+		}
+		group.presetTags = self.Tags
 	}
 	return nil
 }
 
 type Rule struct {
-	Name           string
-	Regexp         *regexp.Regexp
-	SubexpNames    []string
-	stringContains string
+	Name        string
+	Regexp      string
+	Match       string
+	Aggs        []string
+	subexpNames []string
+	regexp      *regexp.Regexp
+	aggs        map[string]Aggregator
 }
 
-type Group struct {
-	Mask       string
-	Rules      [][]string
-	PresetTags map[string]interface{} `json:"preset_tags"`
-	rules      []*Rule
-}
-
-func (self *Group) prepareRegexp() error {
-	self.rules = make([]*Rule, 0)
-	for _, rule := range self.Rules {
-		r, err := regexp.Compile(rule[1])
+func (self *Rule) Prepare() (err error) {
+	if len(self.Regexp) > 0 {
+		self.regexp, err = regexp.Compile(self.Regexp)
 		if err != nil {
-			return err
+			return
 		}
-		stringContains := ""
-		if len(rule) == 3 {
-			stringContains = rule[2]
+		self.subexpNames = self.regexp.SubexpNames()
+	}
+	self.aggs = make(map[string]Aggregator, 0)
+	for _, m := range self.Aggs {
+		if method, ok := Aggregators[m]; ok {
+			self.aggs[m] = method
+		} else {
+			err = fmt.Errorf("Method %q doesn't exists", method)
+			return
 		}
-		self.rules = append(self.rules, &Rule{rule[0], r, r.SubexpNames(), stringContains})
 	}
 	return nil
 }
 
-func LoadConfig(raw []byte) (*Config, error) {
-	config := &Config{}
+type Group struct {
+	Mask       string
+	Rules      []*Rule
+	Tick       string
+	tick       time.Duration
+	presetTags *Tags
+}
+
+func LoadConfig(raw []byte, tags *Tags) (*Config, error) {
+	config := &Config{Tags: tags}
 	_, err := toml.Decode(string(raw), config)
 	if err != nil {
 		return config, err
@@ -67,9 +87,6 @@ func LoadConfig(raw []byte) (*Config, error) {
 	err = config.load()
 	if err != nil {
 		return config, err
-	}
-	if config.Tick < 1 {
-		config.Tick = DEFAULT_TICK_TIME
 	}
 	return config, err
 }
