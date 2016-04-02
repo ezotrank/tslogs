@@ -10,6 +10,19 @@ import (
 	"github.com/hpcloud/tail"
 )
 
+func NewMetricsBuff() *MetricsBuff {
+	return &MetricsBuff{metrics: make(map[*Rule][]*Metric)}
+}
+
+type MetricsBuff struct {
+	metrics map[*Rule][]*Metric
+	sync.Mutex
+}
+
+func (self *MetricsBuff) Clear() {
+	self.metrics = make(map[*Rule][]*Metric)
+}
+
 func getFiles(pattern string) ([]string, error) {
 	return filepath.Glob(pattern)
 }
@@ -22,23 +35,22 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, tsdb *OpenTSDB)
 		return err
 	}
 	Log.Printf("[INFO] start watching file %q", filePath)
-	buff := make(map[*Rule][]*Metric, 0)
-	mutex := &sync.Mutex{}
+	buff := NewMetricsBuff()
 	go func() {
 		c := time.Tick(group.tick)
 		for now := range c {
 			Log.Printf("[DEBUG] tick %v", now)
-			mutex.Lock()
 			allMetrics := make([]*Metric, 0)
-			for rule, metrics := range buff {
+			buff.Lock()
+			for rule, metrics := range buff.metrics {
 				if len(rule.aggs) > 0 {
 					allMetrics = append(allMetrics, aggregateMetrics(rule, metrics)...)
 				} else {
 					allMetrics = append(allMetrics, metrics...)
 				}
 			}
-			buff = make(map[*Rule][]*Metric, 0)
-			mutex.Unlock()
+			buff.Clear()
+			buff.Unlock()
 			if len(allMetrics) > 0 {
 				go tsdb.Send(allMetrics)
 			} else {
@@ -82,10 +94,10 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup, tsdb *OpenTSDB)
 			}
 			metric := &Metric{Metric: rule.Name, Value: val, time: time.Now(), tags: tags}
 			Log.Printf("[DEBUG] create metric %v", metric)
-			if _, ok := buff[rule]; !ok {
-				buff[rule] = make([]*Metric, 0)
+			if _, ok := buff.metrics[rule]; !ok {
+				buff.metrics[rule] = make([]*Metric, 0)
 			}
-			buff[rule] = append(buff[rule], metric)
+			buff.metrics[rule] = append(buff.metrics[rule], metric)
 		}
 	}
 	return nil

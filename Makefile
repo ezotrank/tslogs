@@ -23,6 +23,9 @@ format: init
 
 deploy: build
 	ssh $$USER@$$HOST "mkdir -p ~/tslogs"
-	gzip -5 build/tslogs
-	scp ./build/tslogs.gz $$USER@$$HOST:"~/tslogs/tslogs.gz"
-	ssh $$USER@$$HOST "cd ~/tslogs && gzip -fd tslogs.gz"
+	gzip -5 < bin/tslogs > bin/tslogs.gz
+	scp ./bin/tslogs.gz $$USER@$$HOST:"~/tslogs/tslogs.gz"
+	ssh $$USER@$$HOST "cd ~/tslogs && gzip -fd tslogs.gz && chmod +x tslogs"
+
+generate_monit_conf:
+	@cat staff/monit.conf|sed -e "s/USER/$$USER/g"|sed -e "s/PROJECT/$$PROJECT/g"
