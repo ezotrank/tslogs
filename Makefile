@@ -1,5 +1,5 @@
 build: clean init
-	GOPATH=`pwd`/vendor go build -o bin/tslogs -race cmd/main.go
+	GOPATH=`pwd`/vendor go build  -ldflags "-X main.version=`git log --pretty=format:'%h' -n 1`" -o bin/tslogs -race cmd/main.go
 
 deps: init
 	(export GOPATH=`pwd`/vendor && cd vendor/src/github.com/ezotrank/tslogs && go get)
