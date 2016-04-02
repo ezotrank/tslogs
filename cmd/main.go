@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"strings"
   "fmt"
+	"net/http"
+ 	_ "net/http/pprof"
 	"github.com/ezotrank/tslogs"
 )
 
@@ -15,11 +17,15 @@ var (
 	logLevel = flag.String("logging", "INFO", "log level DEBUG, INFO, WARN, ERROR")
 	logFile = flag.String("log", "", "log file")
 	showVersion = flag.Bool("version", false, "show version of build and exit")
+	profile = flag.Bool("profile", false, "enable pprof profiling")
 	tags = &tslogs.Tags{}
 )
 
 func main() {
 	flag.Parse()
+	if *profile {
+		go http.ListenAndServe(":14000", http.DefaultServeMux)
+	}
 	if *showVersion {
 		fmt.Printf("Version: %q\n", version)
 		return
