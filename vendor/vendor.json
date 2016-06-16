@@ -1,0 +1,135 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "UJTpOZ5IuuyoWFrS42uw/167mn0=",
+			"path": "github.com/BurntSushi/toml",
+			"revision": "f0aeabca5a127c4078abb8c8d64298b147264b55",
+			"revisionTime": "2016-04-26T10:16:13Z"
+		},
+		{
+			"checksumSHA1": "tJLFSeWyXG8RWcdQ3oNtI7meD3c=",
+			"path": "github.com/gonum/blas",
+			"revision": "cadec4b2f438d716d8205fd6456cbfbcbba6ff1c",
+			"revisionTime": "2016-06-08T13:52:42Z"
+		},
+		{
+			"checksumSHA1": "Hc4+U8HpN0345fLzyzrxlqYBBMs=",
+			"path": "github.com/gonum/blas/blas64",
+			"revision": "cadec4b2f438d716d8205fd6456cbfbcbba6ff1c",
+			"revisionTime": "2016-06-08T13:52:42Z"
+		},
+		{
+			"checksumSHA1": "J9gEA5+8UjrU/7vNbGBeeJEQikM=",
+			"path": "github.com/gonum/blas/native",
+			"revision": "cadec4b2f438d716d8205fd6456cbfbcbba6ff1c",
+			"revisionTime": "2016-06-08T13:52:42Z"
+		},
+		{
+			"checksumSHA1": "4URlS0sh4+VMLN6iDIYdt0JfpFg=",
+			"path": "github.com/gonum/blas/native/internal/math32",
+			"revision": "cadec4b2f438d716d8205fd6456cbfbcbba6ff1c",
+			"revisionTime": "2016-06-08T13:52:42Z"
+		},
+		{
+			"checksumSHA1": "Z/2UmBcGPVG2JKszHGwoS4e1UsE=",
+			"path": "github.com/gonum/floats",
+			"revision": "3818baedee3067cb265df0d4aab6d72ae2fdc1fa",
+			"revisionTime": "2016-06-02T14:31:32Z"
+		},
+		{
+			"checksumSHA1": "c9Iryr2u6jMi4TlwBHfLxS1vnYc=",
+			"path": "github.com/gonum/internal/asm",
+			"revision": "1e4f90128ceb812ff6e569376595abafc132d921",
+			"revisionTime": "2016-06-02T14:29:36Z"
+		},
+		{
+			"checksumSHA1": "o7+V4n+5PYRGCZF1+ff7tkHmRuE=",
+			"path": "github.com/gonum/lapack",
+			"revision": "04e1e221b7b8b21a8f22b1634b340177c3b4e018",
+			"revisionTime": "2016-06-15T00:25:47Z"
+		},
+		{
+			"checksumSHA1": "sMw2mRupPf0XP8AGjs+UNrV8a0E=",
+			"path": "github.com/gonum/lapack/lapack64",
+			"revision": "04e1e221b7b8b21a8f22b1634b340177c3b4e018",
+			"revisionTime": "2016-06-15T00:25:47Z"
+		},
+		{
+			"checksumSHA1": "ZvgZg1mo7UmzCb6I2ILRGN4jWSw=",
+			"path": "github.com/gonum/lapack/native",
+			"revision": "04e1e221b7b8b21a8f22b1634b340177c3b4e018",
+			"revisionTime": "2016-06-15T00:25:47Z"
+		},
+		{
+			"checksumSHA1": "Kc/zUGRoA9S4HyhXvEHM7ye12d0=",
+			"path": "github.com/gonum/matrix",
+			"revision": "bc376b0c3bde35e6d38bf6033c9fdbe3e498342b",
+			"revisionTime": "2016-06-02T14:27:46Z"
+		},
+		{
+			"checksumSHA1": "JgwEzXaRfXETtiXJ23tXqyjv1gg=",
+			"path": "github.com/gonum/matrix/mat64",
+			"revision": "bc376b0c3bde35e6d38bf6033c9fdbe3e498342b",
+			"revisionTime": "2016-06-02T14:27:46Z"
+		},
+		{
+			"checksumSHA1": "TdoxOHsiAPNZDgOr3Klv3RomDws=",
+			"path": "github.com/gonum/stat",
+			"revision": "ba4a547b1ee392c651cb3ed9f2c64b461aefee58",
+			"revisionTime": "2016-06-10T17:36:11Z"
+		},
+		{
+			"checksumSHA1": "vt+P9D2yWDO3gdvdgCzwqunlhxU=",
+			"path": "github.com/hashicorp/logutils",
+			"revision": "0dc08b1671f34c4250ce212759ebd880f743d883",
+			"revisionTime": "2015-06-09T07:04:31Z"
+		},
+		{
+			"checksumSHA1": "arojRtqOmOlvVF+Bo4mv05dF/wc=",
+			"path": "github.com/hpcloud/tail",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "JQP5xDlFbFT+PZT8Yk70J5tchUE=",
+			"path": "github.com/hpcloud/tail/ratelimiter",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "0xM336Lb25URO/1W1/CtGoRygVU=",
+			"path": "github.com/hpcloud/tail/util",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "mPYzD3FBUUDZEtVGJpOv1+Uf5ss=",
+			"path": "github.com/hpcloud/tail/watch",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "j65V4wnJboT4pfppNC/gjr2Gl+c=",
+			"path": "github.com/hpcloud/tail/winfile",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "mFhvo8ZlZg1Y1wxet9ndm6JQkJQ=",
+			"origin": "github.com/hpcloud/tail/vendor/gopkg.in/fsnotify.v1",
+			"path": "gopkg.in/fsnotify.v1",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		},
+		{
+			"checksumSHA1": "z56sI90RWCJhiiLlOExjEARbj7I=",
+			"origin": "github.com/hpcloud/tail/vendor/gopkg.in/tomb.v1",
+			"path": "gopkg.in/tomb.v1",
+			"revision": "a30252cb686a21eb2d0b98132633053ec2f7f1e5",
+			"revisionTime": "2016-04-28T00:30:50Z"
+		}
+	],
+	"rootPath": "github.com/ezotrank/tslogs"
+}
