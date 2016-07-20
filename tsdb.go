@@ -53,11 +53,11 @@ func (self *OpenTSDB) Send(metrics []*Metric) error {
 			return err
 		}
 		resp, err := self.client.Do(req)
-		defer resp.Body.Close()
-		if err != nil || resp.StatusCode >= 300 {
+		if err != nil {
 			Log.Printf("[ERROR] can't send request, code: %d, resp: %v, err: %v", resp.StatusCode, resp, err)
 			return err
 		}
+		defer resp.Body.Close()
 		Log.Print("[DEBUG] OpenTSDB chunk sended")
 	}
 	return nil
