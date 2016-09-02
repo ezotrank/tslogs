@@ -8,7 +8,7 @@ deps:
 	govendor init
 	govendor add +external 
 
-github_release:
+github_release: install
 	TAG=`git describe --exact-match --tags $(git log -n1 --pretty='%h')` TOKEN=$$GITHUB_TOKEN ./staff/github_release.sh
 
 docker_tty:
