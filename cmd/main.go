@@ -2,11 +2,8 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
-	"strings"
-  "fmt"
-	"net/http"
- 	_ "net/http/pprof"
+	"os"
+
 	"github.com/ezotrank/tslogs"
 )
 
@@ -14,39 +11,21 @@ var version string
 
 var (
 	configFile = flag.String("config", "./config.conf", "config file")
-	logLevel = flag.String("logging", "INFO", "log level DEBUG, INFO, WARN, ERROR")
-	logFile = flag.String("log", "", "log file")
-	showVersion = flag.Bool("version", false, "show version of build and exit")
-	profile = flag.Bool("profile", false, "enable pprof profiling")
-	tags = &tslogs.Tags{}
+	logLevel   = flag.String("logging", "INFO", "log level DEBUG, INFO, WARN, ERROR")
+	logFile    = flag.String("log", "", "log file")
 )
 
 func main() {
 	flag.Parse()
-	if *profile {
-		go http.ListenAndServe(":14000", http.DefaultServeMux)
-	}
-	if *showVersion {
-		fmt.Printf("Version: %q\n", version)
-		return
-	}
 	tslogs.SetLogger(*logLevel, *logFile)
-	for _,arg := range flag.Args() {
-		tags.Add(strings.Split(arg,"=")[0], strings.Split(arg,"=")[1])
-	}
-	rawConfig, err := ioutil.ReadFile(*configFile)
+	log := tslogs.GetLogger()
+	config, err := tslogs.LoadConfigFile(*configFile)
 	if err != nil {
-		tslogs.Log.Printf("[ERROR] can't read file, err: %v", err)
-		panic(err)
+		log.Printf("[ERROR] can't load config, err: %v", err)
+		os.Exit(1)
 	}
-	config, err := tslogs.LoadConfig(rawConfig, tags)
-	if err != nil {
-		tslogs.Log.Printf("[ERROR] can't load config, err: %v", err)
-		panic(err)
-	}
-	err = tslogs.Watch(config)
-	if err != nil {
-		tslogs.Log.Printf("[ERROR] can't run Watch, err: %v", err)
-		panic(err)
+	if err := tslogs.Watch(config); err != nil {
+		log.Printf("[ERROR] can't run Watch, err: %v", err)
+		os.Exit(1)
 	}
 }

@@ -1,3 +1,6 @@
 package tslogs
 
-type Aggregator func([]float64) (float64, error)
+type Destination interface {
+	Add(metricName string, val float64, tags map[string]string, aggs []string) error
+	Name() string
+}

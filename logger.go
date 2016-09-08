@@ -5,6 +5,7 @@ import (
 	logger "log"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -45,7 +46,12 @@ func initLogFilter(logLevel string, logFile string) io.Writer {
 	return filter
 }
 
+func GetLogger() *logger.Logger {
+	return Log
+}
+
 func SetLogger(logLevel string, logFile string) {
+	logLevel = strings.ToUpper(logLevel)
 	mutex := &sync.Mutex{}
 	Log = &logger.Logger{}
 	c := make(chan os.Signal, 1)
@@ -58,5 +64,6 @@ func SetLogger(logLevel string, logFile string) {
 			mutex.Unlock()
 		}
 	}()
+	Log.SetFlags(logger.LstdFlags | logger.Lshortfile)
 	Log.SetOutput(initLogFilter(logLevel, logFile))
 }
