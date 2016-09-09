@@ -44,12 +44,16 @@ func (self *DataDogS) Add(mName string, val float64, tags map[string]string, agg
 			err = self.statsd.TimeInMilliseconds(mName+".timing", val, statsdTags, 1)
 		case "incr":
 			err = self.statsd.Incr(mName+".incr", statsdTags, 1)
+		case "decr":
+			err = self.statsd.Decr(mName+".decr", statsdTags, 1)
 		case "gauge":
 			err = self.statsd.Gauge(mName+".gauge", val, statsdTags, 1)
 		case "count":
 			err = self.statsd.Count(mName+".count", int64(val), statsdTags, 1)
-		case "set":
-			err = self.statsd.Count(mName+".set", int64(val), statsdTags, 1)
+		// case "set":
+		// 	err = self.statsd.Set(mName+".set", int64(val), statsdTags, 1)
+		case "hist":
+			err = self.statsd.Histogram(mName+".hist", val, statsdTags, 1)
 		}
 		if err != nil {
 			Log.Printf("[WARN] can't send metric to datadogs, err: %v", err)
