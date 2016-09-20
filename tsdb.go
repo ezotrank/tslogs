@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	tsdbTickTimeSeconds = 5
+	tsdbTickTimeSeconds = 10
 )
 
 var tsdbAggregators = map[string]func([]float64) (float64, error){
