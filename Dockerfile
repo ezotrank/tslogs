@@ -1,8 +1,10 @@
-FROM golang:1.7.0
+FROM golang:1.7.1
 
 COPY . /go/src/github.com/ezotrank/tslogs
 WORKDIR /go/src/github.com/ezotrank/tslogs
 
-RUN make deps && make install
+RUN make install
+VOLUME /logs
+VOLUME /configs
 
-CMD ["tslogs"]
+CMD ["/go/bin/tslogs"]

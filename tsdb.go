@@ -144,7 +144,7 @@ func (self *TSDB) send() error {
 	}
 	resp, err := self.client.Do(req)
 	if err != nil {
-		Log.Printf("[ERROR] can't send request, code: %d, resp: %v, err: %v", resp.StatusCode, resp, err)
+		Log.Printf("[ERROR] can't send request, err: %v", err)
 		return err
 	}
 	defer resp.Body.Close()

@@ -22,6 +22,3 @@ docker_build:
 
 docker_tty:
 	docker run --rm -v `pwd`:/go/src/github.com/ezotrank/tslogs -ti ezotrank/tslogs /bin/bash
-
-generate_monit_conf:
-	@cat staff/monit.conf|sed -e "s/USER/$$USER/g"|sed -e "s/PROJECT/$$PROJECT/g"
