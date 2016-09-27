@@ -19,6 +19,7 @@ func main() {
 	flag.Parse()
 	tslogs.SetLogger(*logLevel, *logFile)
 	log := tslogs.GetLogger()
+	log.Printf("[INFO] Start with log level %s", *logLevel)
 	config, err := tslogs.LoadConfigFile(*configFile)
 	if err != nil {
 		log.Printf("[ERROR] can't load config, err: %v", err)
