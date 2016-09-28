@@ -7,6 +7,5 @@ RUN make install
 
 VOLUME /logs
 VOLUME /configs
-ENV logging info
 
-CMD ["/go/bin/tslogs", "-config", "/configs/config.conf",  "-logging", "$logging"]
+ENTRYPOINT ["/go/bin/tslogs"]
