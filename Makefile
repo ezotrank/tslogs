@@ -7,9 +7,6 @@ format:
 install_to_tmp: install
 	mkdir -p ./tmp && cp -rf $$GOPATH/bin/tslogs ./tmp/tslogs
 
-github_release: install
-	TAG=`git describe --exact-match --tags $(git log -n1 --pretty='%h')` TOKEN=$$GITHUB_TOKEN ./staff/github_release.sh
-
 docker_build:
 	docker build -t ezotrank/tslogs .
 
