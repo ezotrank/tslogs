@@ -34,18 +34,18 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 				matches := rule.regexp.FindStringSubmatch(line.Text)
 				if len(matches) > 1 {
 					tags := make(map[string]string)
-					vals := make([]float64, 0)
+					vals := make(map[string]float64)
 					for i, value := range matches[1:] {
-						switch rule.subexpNames[i+1] {
+						switch groupName := rule.subexpNames[i+1]; {
 						default:
 							tags[rule.subexpNames[i+1]] = value
-						case "val":
+						case len(groupName) >= 3 && groupName[:3] == "val":
 							val, err := strconv.ParseFloat(value, 64)
 							if err != nil {
 								Log.Printf("[WARN] can't parse value %q to float64, err: %v", value, err)
 								break
 							}
-							vals = append(vals, val)
+							vals[groupName] = val
 						}
 					}
 					go addMetric(group, rule, vals, tags)
@@ -56,10 +56,14 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 	return nil
 }
 
-func addMetric(group *Group, rule *Rule, vals []float64, tags map[string]string) error {
+func addMetric(group *Group, rule *Rule, vals map[string]float64, tags map[string]string) error {
 	for _, dst := range group.destinations {
-		for _,val := range vals {
-			dst.Add(rule.Name, val, tags, rule.Aggs[dst.Name()])
+		for groupName,val := range vals {
+			name := rule.Name
+			if groupName != "val" {
+				name = name + "." + strings.Split(groupName, "_")[1]
+			}
+			dst.Add(name, val, tags, rule.Aggs[dst.Name()])
 		}
 	}
 	return nil
