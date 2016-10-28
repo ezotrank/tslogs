@@ -36,6 +36,7 @@ func (self *DataDogS) formatTags(tags map[string]string) []string {
 }
 
 func (self *DataDogS) Add(mName string, val *Value, tags map[string]string, aggs []string) error {
+	Log.Printf("[DEBUG] add metrics name: %s, val: %+v, tags: %+v, aggs: %+v", mName, val, tags, aggs)
 	self.once.Do(func(){
 		if err := self.connect(); err != nil {
 			Log.Printf("[ERROR] can't connect to datadog statsd server, err: %v", err)
@@ -81,6 +82,7 @@ func (self *DataDogS) Add(mName string, val *Value, tags map[string]string, aggs
 		if err != nil {
 			Log.Printf("[WARN] can't send metric to datadogs, err: %v", err)
 		}
+		Log.Printf("[DEBUG] metrics sent name: %s, val: %+v, tags: %+v, aggs: %+v", mName, val, tags, aggs)
 	}
 	return nil
 }
