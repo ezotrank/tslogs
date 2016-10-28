@@ -81,6 +81,7 @@ func (self *DataDogS) Add(mName string, val *Value, tags map[string]string, aggs
 		}
 		if err != nil {
 			Log.Printf("[WARN] can't send metric to datadogs, err: %v", err)
+			return err
 		}
 		Log.Printf("[DEBUG] metrics sent name: %s, val: %+v, tags: %+v, aggs: %+v", mName, val, tags, aggs)
 	}
