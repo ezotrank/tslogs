@@ -1,0 +1,31 @@
+[destinations]
+
+  [destinations.tsdb]
+    host = "hosta:4242"
+
+  [destinations.datadogs]
+    host = "hostb:8125"
+
+[groups]
+
+  [groups.app1]
+    mask = "/logs/app1.log"
+ 
+      [[groups.app.rules]]
+        name = "app.exec_time_info"
+        regexp = '.+\] gate (?P<gate_unit_name>\w+) finished adaptor: (?P<adaptor>\w+), location: (?P<place_id>\w+), hotels: (?P<val>\d+)'
+        match = " finished adaptor: "
+        
+        [groups.app.rules.aggs]
+          tsdb = ["count"]
+
+  [groups.app2]
+    mask = "/logs/app.log"
+ 
+      [[groups.app.rules]]
+        name = "app.exec_time_info"
+        regexp = '.+\] gate (?P<gate_unit_name>\w+) finished adaptor: (?P<adaptor>\w+), location: (?P<place_id>\w+), hotels: (?P<val>\d+)'
+        match = " finished adaptor: "
+        
+        [groups.app.rules.aggs]
+          tsdb = ["count"]

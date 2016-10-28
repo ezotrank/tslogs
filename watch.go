@@ -2,7 +2,6 @@ package tslogs
 
 import (
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -34,17 +33,13 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 				matches := rule.regexp.FindStringSubmatch(line.Text)
 				if len(matches) > 1 {
 					tags := make(map[string]string)
-					vals := make(map[string]float64)
+					vals := make(map[string]*Value)
 					for i, value := range matches[1:] {
+						val := &Value{val: value}
 						switch groupName := rule.subexpNames[i+1]; {
 						default:
 							tags[rule.subexpNames[i+1]] = value
 						case len(groupName) >= 3 && groupName[:3] == "val":
-							val, err := strconv.ParseFloat(value, 64)
-							if err != nil {
-								Log.Printf("[WARN] can't parse value %q to float64, err: %v", value, err)
-								break
-							}
 							vals[groupName] = val
 						}
 					}
@@ -56,7 +51,7 @@ func tailFile(filePath string, group *Group, wg *sync.WaitGroup) error {
 	return nil
 }
 
-func addMetric(group *Group, rule *Rule, vals map[string]float64, tags map[string]string) error {
+func addMetric(group *Group, rule *Rule, vals map[string]*Value, tags map[string]string) error {
 	for _, dst := range group.destinations {
 		for groupName,val := range vals {
 			name := rule.Name

@@ -1,7 +1,13 @@
+.PHONY: test 
+
+test:
+	go test
+
 install:
 	go build -o $$GOPATH/bin/tslogs cmd/main.go
 	
 format:
+	go get golang.org/x/tools/cmd/goimports
 	goimports -w *.go ./cmd/*.go
 
 install_to_tmp: install
@@ -18,4 +24,4 @@ binary: docker_build
 	docker rm -v tslogs_tmp
 
 docker_tty:
-	docker run --rm -v `pwd`:/go/src/github.com/ezotrank/tslogs -ti ezotrank/tslogs /bin/bash
+	docker run --rm -v `pwd`:/go/src/github.com/ezotrank/tslogs -ti --entrypoint /bin/bash ezotrank/tslogs 

@@ -72,21 +72,24 @@ func (self *TSDB) timer() {
 	}()
 }
 
-func (self *TSDB) Add(mName string, val float64, tags map[string]string, aggs []string) error {
+func (self *TSDB) Add(mName string, val *Value, tags map[string]string, aggs []string) error {
 	self.once.Do(self.timer)
 	defer self.Unlock()
 	key := mName + metricScopeKey(tags, aggs)
 	self.Lock()
-	if scope, ok := self.buff[key]; !ok {
+	if _, ok := self.buff[key]; !ok {
 		self.buff[key] = &tsdbMetricScope{
 			Vals: make([]float64, 0),
 			Tags: tags,
 			Aggs: aggs,
 			Name: mName,
 		}
-	} else {
-		scope.Vals = append(scope.Vals, val)
 	}
+	fVal, err := val.Float64()
+	if err != nil {
+		return err
+	}
+	self.buff[key].Vals = append(self.buff[key].Vals, fVal)
 	return nil
 }
 

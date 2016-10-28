@@ -27,6 +27,24 @@ func loadDest(name string, conf toml.Primitive) (Destination, error) {
 	}
 }
 
+func destinationsInGroup(config *Config, group *Group) ([]Destination, error) {
+	dstMap := make(map[string]bool)
+	for _, rule := range group.Rules {
+		for dst,_ := range rule.Aggs {
+			dstMap[dst] = true
+		}
+	}
+	destinations := make([]Destination, 0)
+	for dstName, _ := range dstMap {
+		if val, ok := config.Destinations[dstName]; ok {
+			destinations = append(destinations, val)
+		} else {
+			return destinations, fmt.Errorf("can't find destination with name %q", dstName)
+		}
+	}
+	return destinations, nil
+}
+
 func ConfigFile2Config(cfile *ConfigFile) (*Config, error) {
 	config := &Config{
 		Destinations: make(map[string]Destination),
@@ -41,17 +59,14 @@ func ConfigFile2Config(cfile *ConfigFile) (*Config, error) {
 		}
 	}
 	config.Tags = cfile.Tags
+	var err error
 	for name, prm := range cfile.Groups {
-		group := &Group{destinations: make([]Destination, 0)}
-		if err := toml.PrimitiveDecode(prm, group); err != nil {
+		group := &Group{}
+		if err = toml.PrimitiveDecode(prm, group); err != nil {
 			return nil, err
 		}
-		for _, dst := range group.Destinations {
-			if val, ok := config.Destinations[dst]; ok {
-				group.destinations = append(group.destinations, val)
-			} else {
-				return nil, fmt.Errorf("can't find destination with name %q", dst)
-			}
+		if group.destinations, err = destinationsInGroup(config, group); err != nil {
+			return nil, err
 		}
 		if err := group.LoadRules(); err != nil {
 			return nil, err
@@ -96,7 +111,6 @@ func (self *Rule) Load() error {
 type Group struct {
 	Mask         string
 	Rules        []*Rule
-	Destinations []string
 	destinations []Destination
 }
 

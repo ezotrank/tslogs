@@ -1,0 +1,35 @@
+[destinations]
+
+  [destinations.tsdb]
+    host = "hosta:4242"
+
+  [destinations.datadogs]
+    host = "hostb:8125"
+
+[groups]
+
+  [groups.app1]
+    mask = "/logs/app.log"
+    destinations = ["tsdb", "datadogs"]
+
+    [[groups.app1.rules]]
+      name = "app.handler_exec"
+      regexp = '^\[.+\] (?P<http_code>\d+) (?P<http_method>GET|POST) .+ (?P<val>\d+\.\d+)ms$'
+      match = "] "
+
+      [groups.app1.rules.aggs]
+        tsdb = ["min", "max", "count", "mean", "p75", "p90", "p95", "p99"]
+        datadogs = ["hist"]
+
+  [groups.app2]
+    mask = "/logs/app2.log"
+    destinations = ["tsdb", "datadogs"]
+
+    [[groups.app2.rules]]
+      name = "app2.handler_exec"
+      regexp = '^\[.+\] (?P<http_code>\d+) (?P<http_method>GET|POST) .+ (?P<val>\d+\.\d+)ms$'
+      match = "] "
+
+      [groups.app2.rules.aggs]
+        tsdb = ["min", "max", "count", "mean", "p75", "p90", "p95", "p99"]
+        datadogs = ["hist"]
